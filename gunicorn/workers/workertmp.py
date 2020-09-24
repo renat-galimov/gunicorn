@@ -49,7 +49,7 @@ class WorkerTmp(object):
             self._tmp.truncate(0)
             os.write(self._tmp.fileno(), b"X")
         ended_at = time.time()
-        with open(os.path.join(self.worker_tmp_dir, 'notify.{}'.format(os.getpid()))) as f:
+        with open(os.path.join(self.worker_tmp_dir, 'notify.{}'.format(os.getpid())), 'a') as f:
             f.write("{}\n".format(ended_at - started_at))
 
     def last_update(self):
