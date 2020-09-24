@@ -6,6 +6,7 @@
 import os
 import platform
 import tempfile
+import time
 
 from gunicorn import util
 
@@ -16,6 +17,7 @@ IS_CYGWIN = PLATFORM.startswith('CYGWIN')
 class WorkerTmp(object):
 
     def __init__(self, cfg):
+        self.worker_tmp_dir = cfg.worker_tmp_dir
         old_umask = os.umask(cfg.umask)
         fdir = cfg.worker_tmp_dir
         if fdir and not os.path.isdir(fdir):
@@ -38,6 +40,7 @@ class WorkerTmp(object):
         self.spinner = 0
 
     def notify(self):
+        started_at = time.time()
         try:
             self.spinner = (self.spinner + 1) % 2
             os.fchmod(self._tmp.fileno(), self.spinner)
@@ -45,6 +48,9 @@ class WorkerTmp(object):
             # python < 2.6
             self._tmp.truncate(0)
             os.write(self._tmp.fileno(), b"X")
+        ended_at = time.time()
+        with open(os.path.join(self.worker_tmp_dir, 'notify.{}'.format(os.getpid()))) as f:
+            f.write("{}\n".format(ended_at - started_at))
 
     def last_update(self):
         return os.fstat(self._tmp.fileno()).st_ctime
